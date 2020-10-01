@@ -9,7 +9,7 @@
 # 8. autoupdater -f
 
 #Create Variables
-LAN="$(cat /lib/gluon/core/sysconfig/lan_ifname)" #LAN="eth0"    # LAN Interface => does not work: LAN="$(cat /lib/gluon/core/sysconfig/lan_ifname)"
+LAN="$(cat /lib/gluon/core/sysconfig/lan_ifname)" # Get default LAN Interface
 CMT=false   # commit
 MVL=3       # mesh vlan
 CVL=4       # client vlan
@@ -26,10 +26,10 @@ fi
 
 # activate mesh_lan interface
 if [ "$(uci get network.mesh_lan.disabled)" == 0 ]; then
-	logger Mesh_Lan is enabled
+	logger VLAN Config: Mesh_Lan is enabled
 else
 	uci set network.mesh_lan.disabled=0
-	logger Set mesh_lan Interface to enable
+	logger VLAN Config: Set mesh_lan Interface to enable
 	CMT=true
 fi
 
@@ -42,16 +42,16 @@ else
 	uci add_list network.client.ifname="bat0"
 	uci add_list network.client.ifname="local-port"    
 	uci add_list network.client.ifname="$LAN.$CVL"    
-	logger VLAN Config: Changing network.client.ifname from $oldifclient to bat0 + local-port + $LAN.$CVL...    
+	logger VLAN Config: Changing network.client.ifname from $oldifclient to bat0 + local-port + $LAN.$CVL ...    
 	CMT=true
 fi
 
 #commit only if there were changes
 if [ $CMT = true ]; then    
-    uci commit network
+    uci commit network  #save changes to flash
+    sleep 300           #sleep 5 mins to prevent boot loop if something is missconfigured
     logger VLAN Config: Config was changed and saved, reboot initiated   
-    sleep 300
-    reboot
+    reboot              #reboot router to apply config changes
 else    
     logger VLAN Config: no change!
 fi
